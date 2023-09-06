@@ -1,0 +1,29 @@
+.centered {
+  display: flex;
+  justify-self: center;
+  align-items: center;
+}
+
+.centered_noScroll {
+  display: flex;
+  justify-self: center;
+  align-items: center;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.centered_noScroll::-webkit-scrollbar {
+  display: none;
+}
+
+.middle {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.dropBox {
+  border: 2px solid #ccc;
+  border-style: dotted;
+  padding: 5px;
+  cursor: pointer;
+}
