@@ -6,6 +6,8 @@ import PageSignup from "./Pages/PageSignup/PageSignup";
 import PageLogin from "./Pages/PageLogin/PageLogin";
 import PageView from "./Pages/PageView/PageView";
 import PageHome from "./Pages/PageHome/PageHome";
+import PageConfirmEmail from "./Pages/PageConfirmEmail/PageConfirmEmail";
+import PageMailConfirm from "./Pages/PageMailConfirm/PageMailConfirm";
 
 const theme = createTheme({
   typography: {
@@ -38,6 +40,10 @@ function App() {
         <Route path="/results/:id" element={<PageView />} />
         <Route path="/login" element={<PageLogin />} />
         <Route path="/signup" element={<PageSignup />} />
+        <Route path="/confirm-email" element={<PageMailConfirm />} />
+        <Route path="/" element={<PageConfirmEmail />}>
+          <Route path=":email/:otp" element={<PageConfirmEmail />} />
+        </Route>
         <Route path="/*" element={<PageNotFound />} />
       </Routes>
     </ThemeProvider>

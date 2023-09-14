@@ -18,15 +18,12 @@ const VisuallyHiddenInput = styled("TextField")`
 const UploadButton = () => {
   return (
     <Button
-      //   component="label"
-      //   role={undefined}
-      //   tabIndex={-1}
       variant="contained"
       component="label"
-      startIcon={<CloudUploadOutlinedIcon color="textSecondary" />}>
+      startIcon={<CloudUploadOutlinedIcon color="textSecondary" />}
+    >
       Upload a File
       <input type="file" hidden />
-      {/* <VisuallyHiddenInput type="file" /> */}
     </Button>
   );
 };

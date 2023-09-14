@@ -67,13 +67,6 @@ const Signup = () => {
   // handleSubmit function for login
   const handleSubmit = async (event) => {
     event.preventDefault();
-    // let data = new FormData();
-    // data.append("email", email);
-    // data.append("password", password);
-    // console.log({
-    //   email: data.get("email"),
-    //   password: data.get("password"),
-    // });
 
     if (name !== "" && name.trim().length > 0 && !nameError) {
       if (email !== "" && email.trim().length > 0 && !emailError) {
@@ -85,7 +78,7 @@ const Signup = () => {
           };
           var config = {
             method: "POST",
-            url: "http://localhost:3003/websiteScreening/reg",
+            url: `${process.env.REACT_APP_WEBSITE_SCREENING}/sign-up`,
             //   url: `${url}/auth/login`,
             data,
           };
@@ -101,8 +94,8 @@ const Signup = () => {
                 setEmail("");
                 setPassword("");
                 setTimeout(() => {
-                  navigate("/login");
-                }, 1050);
+                  navigate("/confirm-email");
+                }, 2000);
               } else {
                 setSnackbarOpen(true);
                 setSnackbarType("error");
@@ -123,7 +116,7 @@ const Signup = () => {
               } else {
                 setSnackbarType("error");
                 setSnackbarOpen(true);
-                setSnackbarMessage(error.message);
+                setSnackbarMessage(error.response.data.error);
               }
             });
         } else {
@@ -155,11 +148,13 @@ const Signup = () => {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-        }}>
+        }}
+      >
         <Link
           href="/"
           underline="none"
-          sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+          sx={{ display: "flex", alignItems: "center", mb: 2 }}
+        >
           <img src={tcIcon} alt="icon" height={30} width={30} />
           <Typography variant="h5" sx={{ ml: 1 }}>
             <b>TrustCheckr</b>
@@ -229,7 +224,8 @@ const Signup = () => {
                   <InputAdornment position="end">
                     <IconButton
                       aria-label="toggle password visibility"
-                      onClick={handleClickShowPassword}>
+                      onClick={handleClickShowPassword}
+                    >
                       {showPassword ? <Visibility /> : <VisibilityOff />}
                     </IconButton>
                   </InputAdornment>
@@ -242,7 +238,8 @@ const Signup = () => {
               onClick={handleSubmit}
               fullWidth
               variant="contained"
-              sx={{ mt: 3, mb: 2 }}>
+              sx={{ mt: 3, mb: 2 }}
+            >
               Signup
             </Button>
           </Box>
@@ -258,11 +255,13 @@ const Signup = () => {
         open={snackbarOpen}
         autoHideDuration={4000}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        onClose={() => setSnackbarOpen(false)}>
+        onClose={() => setSnackbarOpen(false)}
+      >
         <Alert
           onClose={() => setSnackbarOpen(false)}
           severity={snackbarType}
-          sx={{ width: "100%" }}>
+          sx={{ width: "100%" }}
+        >
           {snackbarMessage}
         </Alert>
       </Snackbar>

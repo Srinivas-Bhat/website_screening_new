@@ -42,14 +42,16 @@ const Navbar = (props) => {
           background: !trigger ? "transparent" : "white",
           boxShadow: trigger ? "0 5px 20px 0 rgb(0 0 0 / 10%)" : "none",
           zIndex: (theme) => theme.zIndex.drawer + 1,
-        }}>
+        }}
+      >
         <Container>
           <Toolbar disableGutters sx={{ display: "flex" }}>
             <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1 }}>
               <Link
                 href={"/"}
                 underline="none"
-                sx={{ display: "flex", alignItems: "center", mr: 5 }}>
+                sx={{ display: "flex", alignItems: "center", mr: 5 }}
+              >
                 <img src={tcIcon} alt="logo" width={165} />
               </Link>
             </Box>
@@ -147,15 +149,17 @@ const Navbar = (props) => {
                   href={"/login"}
                   sx={{ borderRadius: 5, mr: 1 }}
                   size="large"
-                  startIcon={<PersonIcon />}>
+                  startIcon={<PersonIcon />}
+                >
                   <b>Log in</b>
                 </Button>
                 <Button
                   variant="outlined"
-                  href={"/login"}
+                  href={"/signup"}
                   sx={{ borderRadius: 5 }}
                   size="large"
-                  startIcon={<PersonIcon />}>
+                  startIcon={<PersonIcon />}
+                >
                   <b>Sign up</b>
                 </Button>
               </>

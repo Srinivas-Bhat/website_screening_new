@@ -2,6 +2,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Alert,
   Box,
   Button,
   CircularProgress,
@@ -10,11 +11,15 @@ import {
   FormControl,
   FormHelperText,
   Grid,
+  IconButton,
   InputBase,
   Paper,
+  Popover,
+  Snackbar,
+  Stack,
   Typography,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import SendIcon from "@mui/icons-material/Send";
 import styles from "../../styles/Home.module.css";
@@ -24,27 +29,64 @@ import RemoveIcon from "@mui/icons-material/Remove";
 import axios from "axios";
 import Result from "../Result/Result";
 import UploadButton from "../Common/UploadButton";
+import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import { styled } from "@mui/material/styles";
+import Tooltip, { tooltipClasses } from "@mui/material/Tooltip";
+import { CSVLink, CSVDownload } from "react-csv";
 
 const Home = ({ isMdDown, isSmDown }) => {
-  const userId = JSON.parse(localStorage.getItem("websiteScreening")).userId;
+  const userId = JSON.parse(localStorage.getItem("websiteScreening"))?.userId;
   const [inputBoxCount, setInputBoxCount] = useState([
     {
       type: "text",
       id: 0,
       url: "",
       keyWords: [],
+      csvKeyWords: null,
     },
   ]);
   const [loading, setLoading] = useState(false);
   const [apiData, setApiData] = useState(null);
-  const [flag, setFlag] = useState(null);
+  const hiddenFileInput = useRef(null);
   const [error, setError] = useState([
     {
       id: 0,
       url: false,
       keyWords: false,
+      csvKeyWords: false,
     },
   ]);
+  const [snackbarOpen, setSnackbarOpen] = React.useState(false);
+  const [snackbarMessage, setSnackbarMessage] = React.useState("");
+  const [snackbarType, setSnackbarType] = React.useState("error");
+
+  const LightTooltip = styled(({ className, ...props }) => (
+    <Tooltip placement="bottom-start" {...props} classes={{ popper: className }} />
+  ))(({ theme }) => ({
+    [`& .${tooltipClasses.tooltip}`]: {
+      backgroundColor: theme.palette.common.white,
+      color: "rgba(0, 0, 0, 0.87)",
+      boxShadow: theme.shadows[1],
+      fontSize: 12,
+    },
+  }));
+
+  {
+    /* CSV Sample file download configuration */
+  }
+  const csvHeaders = [{ label: "keywords", key: "keywords" }];
+  const csvData = [
+    { keywords: "scam" },
+    { keywords: "fraud" },
+    { keywords: "Cheat" },
+    { keywords: "Drugs" },
+  ];
+  const csvlink = {
+    filename: "keywordssss.csv",
+    headers: csvHeaders,
+    data: csvData,
+  };
 
   const handleAddFields = (index, e) => {
     if (inputBoxCount.length < 10) {
@@ -56,6 +98,7 @@ const Home = ({ isMdDown, isSmDown }) => {
             id: index,
             url: "",
             keyWords: [],
+            csvKeyWords: null,
           },
         ];
       });
@@ -66,6 +109,7 @@ const Home = ({ isMdDown, isSmDown }) => {
             id: 0,
             url: false,
             keyWords: false,
+            csvKeyWords: false,
           },
         ];
       });
@@ -146,10 +190,15 @@ const Home = ({ isMdDown, isSmDown }) => {
           newErrorArr[item.id].url = false;
           return newErrorArr;
         });
-        if (item.keyWords.length > 0) {
+        if (item?.keyWords?.length > 0 || item?.csvKeyWords?.length) {
           setError((s) => {
             const newErrorArr = s.slice();
             newErrorArr[item.id].keyWords = false;
+            return newErrorArr;
+          });
+          setError((s) => {
+            const newErrorArr = s.slice();
+            newErrorArr[item.id].csvKeyWords = false;
             return newErrorArr;
           });
           return false;
@@ -159,6 +208,9 @@ const Home = ({ isMdDown, isSmDown }) => {
             newErrorArr[item.id].keyWords = true;
             return newErrorArr;
           });
+          setSnackbarOpen(true);
+          setSnackbarType("error");
+          setSnackbarMessage("Enter Keywords or Upload a csv file");
           return true;
         }
       } else {
@@ -167,6 +219,9 @@ const Home = ({ isMdDown, isSmDown }) => {
           newErrorArr[item.id].url = true;
           return newErrorArr;
         });
+        setSnackbarOpen(true);
+        setSnackbarType("error");
+        setSnackbarMessage("Enter the URL");
         return true;
       }
     });
@@ -193,7 +248,7 @@ const Home = ({ isMdDown, isSmDown }) => {
 
   const handleSecondInternalAPICall = () => {
     setLoading(true);
-    var config = {
+    let config = {
       method: "POST",
       url: `${process.env.REACT_APP_WEBSITE_SCREENING}/get-data-from-user-id`, //get-data-from-user-id
       headers: {
@@ -216,6 +271,33 @@ const Home = ({ isMdDown, isSmDown }) => {
       });
   };
 
+  const handleCSVUpload = (event, index) => {
+    console.log("i");
+    const fileUploaded = event.target.files[0];
+    let data = new FormData();
+    data.append("csv_file", fileUploaded);
+    let config = {
+      method: "POST",
+      url: `${process.env.REACT_APP_WEBSITE_SCREENING}/upload-csv-file`, //get-data-from-user-id
+      headers: {
+        "content-type": "multipart/form-data",
+      },
+      data,
+    };
+    axios(config)
+      .then((response) => {
+        console.log(response.data.data);
+        setInputBoxCount((s) => {
+          const newArr = s.slice();
+          newArr[index].csvKeyWords = response.data?.data;
+          return newArr;
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+      });
+  };
+
   useEffect(() => {
     handleSecondInternalAPICall();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -234,13 +316,15 @@ const Home = ({ isMdDown, isSmDown }) => {
               justifyContent: "flex-start",
               flexDirection: "column",
               // maxHeight: "90vh",
-            }}>
+            }}
+          >
             <Box sx={{ mt: 5 }}>
               <Typography
                 variant={isSmDown ? "h4" : isMdDown && !isSmDown ? "h3" : "h3"}
                 sx={{ mb: { sm: 4, xs: 0 } }}
                 align="center"
-                color="primary">
+                color="primary"
+              >
                 <b>Merchant Website Screening</b>
               </Typography>
             </Box>
@@ -251,134 +335,185 @@ const Home = ({ isMdDown, isSmDown }) => {
                 gap: 1,
                 height: "70vh",
                 overflowY: "scroll",
-              }}>
-              {inputBoxCount.map((el, index) => (
-                <React.Fragment key={el.id + index}>
-                  <Box
-                    sx={{ gap: 1, flexDirection: "column", mt: 2 }}
-                    className={styles.middle}>
-                    <Box className={styles.centered_noScroll} sx={{ gap: 3.5 }}>
-                      <FormControl>
+              }}
+            >
+              {inputBoxCount &&
+                inputBoxCount.map((el, index) => (
+                  <React.Fragment key={el.id + index}>
+                    <Box
+                      sx={{ gap: 1, flexDirection: "column", mt: 2 }}
+                      className={styles.middle}
+                    >
+                      <Box className={styles.centered_noScroll} sx={{ gap: 3.5 }}>
+                        <FormControl>
+                          <Paper
+                            component="form"
+                            sx={{
+                              p: "2px 10px",
+                              display: "flex",
+                              alignItems: "center",
+                              width: 300,
+                              height: 40,
+                            }}
+                          >
+                            <InputBase
+                              multiline={false}
+                              fullWidth={true}
+                              id={index}
+                              sx={{ ml: 1, flex: 1 }}
+                              onChange={(e) => handleChange(e)}
+                              placeholder="Enter URL ex: https://example.com"
+                              // inputProps={{ "aria-label": "search google maps" }}
+                            />
+                          </Paper>
+                        </FormControl>
+                        {index === 0 ? (
+                          <>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              disabled={index === 10 ? true : false}
+                              color="primary"
+                              sx={{ height: 44 }}
+                              onClick={(e) => handleAddFields(inputBoxCount.length, e)}
+                            >
+                              <AddIcon />
+                            </Button>
+                            <Button
+                              className={styles.centered}
+                              disabled={inputBoxCount.length === 1 ? true : false}
+                              sx={{ height: 44 }}
+                              size="small"
+                              variant="outlined"
+                              color="error"
+                              onClick={handleDeleteFields}
+                            >
+                              <RemoveIcon />
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button disabled={true} size="small" variant="text"></Button>
+                            <Button disabled={true} size="small" variant="text"></Button>
+                          </>
+                        )}
+                      </Box>
+                      <Box sx={{ display: "flex", alignItems: "center" }}>
                         <Paper
                           component="form"
+                          id={index}
                           sx={{
                             p: "2px 10px",
                             display: "flex",
                             alignItems: "center",
                             width: 300,
-                            height: 40,
-                          }}>
-                          <InputBase
-                            multiline={false}
-                            fullWidth={true}
-                            id={index}
-                            sx={{ ml: 1, flex: 1 }}
-                            onChange={(e) => handleChange(e)}
-                            placeholder="Enter URL ex: https://example.com"
-                            // inputProps={{ "aria-label": "search google maps" }}
+                            minHeight: 60,
+                            overflow: "scroll",
+                          }}
+                        >
+                          <MuiChipsInput
+                            sx={{ "& fieldset": { border: "none" } }}
+                            hideClearAll
+                            // disableDeleteOnBackspace
+                            fullWidth
+                            size="small"
+                            value={inputBoxCount[index].keyWords}
+                            onChange={(newValue) => {
+                              // console.log(newValue, newValue.length);
+                              if (newValue.length < 10) {
+                                handleChipChange(newValue, index);
+                              }
+                            }}
                           />
                         </Paper>
-                      </FormControl>
-                      {index === 0 ? (
-                        <>
-                          <Button
+                        <Typography
+                          variant="caption"
+                          align="center"
+                          color="textSecondary"
+                          sx={{ px: 0.7 }}
+                        >
+                          OR
+                        </Typography>
+                        <Button
+                          // onClick={handleUploadButtonClick}
+                          variant="contained"
+                          component="label"
+                          startIcon={<CloudUploadOutlinedIcon color="textSecondary" />}
+                        >
+                          Upload a File
+                          <input
+                            type="file"
+                            accept=".csv"
+                            ref={hiddenFileInput}
+                            hidden
+                            onChange={(e) => handleCSVUpload(e, index)}
+                          />
+                        </Button>
+                        <LightTooltip
+                          title={
+                            <>
+                              <Typography variant="caption">
+                                1.Heading of the CSV file should be 'keywords'.
+                                <br />
+                                2. Keywords has to be lesser than 500
+                              </Typography>
+                              <br />
+                              <Stack direction="column" align="center" sx={{ mt: 0.5 }}>
+                                <CSVLink {...csvlink} target="_blank">
+                                  <Button
+                                    sx={{ alignItems: "center" }}
+                                    size="small"
+                                    variant="outlined"
+                                  >
+                                    Download Sample File
+                                  </Button>
+                                </CSVLink>
+                              </Stack>
+                            </>
+                          }
+                        >
+                          <IconButton
                             size="small"
-                            variant="outlined"
-                            disabled={index === 10 ? true : false}
-                            color="primary"
-                            sx={{ height: 44 }}
-                            onClick={(e) =>
-                              handleAddFields(inputBoxCount.length, e)
-                            }>
-                            <AddIcon />
-                          </Button>
-                          <Button
-                            className={styles.centered}
-                            disabled={inputBoxCount.length === 1 ? true : false}
-                            sx={{ height: 44 }}
-                            size="small"
-                            variant="outlined"
-                            color="error"
-                            onClick={handleDeleteFields}>
-                            <RemoveIcon />
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Button
-                            disabled={true}
-                            size="small"
-                            variant="text"></Button>
-                          <Button
-                            disabled={true}
-                            size="small"
-                            variant="text"></Button>
-                        </>
+                            // aria-owns={open ? "mouse-over-popover" : undefined}
+                            // aria-haspopup="true"
+                            // onMouseEnter={handlePopoverOpen}
+                            // onMouseLeave={handlePopoverClose}
+                            sx={{ ml: 1 }}
+                          >
+                            <InfoOutlinedIcon />
+                          </IconButton>
+                        </LightTooltip>
+                      </Box>
+                      {error[index].url && (
+                        <FormHelperText error={error[index].url} color="error">
+                          Enter Valid Details
+                        </FormHelperText>
+                      )}
+                      {inputBoxCount[index].keyWords.length >= 10 && (
+                        <Typography variant="caption" color="error">
+                          Key words limit is exceeded
+                        </Typography>
                       )}
                     </Box>
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                      <Paper
-                        component="form"
-                        id={index}
-                        sx={{
-                          p: "2px 10px",
-                          display: "flex",
-                          alignItems: "center",
-                          width: 300,
-                          minHeight: 60,
-                        }}>
-                        <MuiChipsInput
-                          sx={{ "& fieldset": { border: "none" } }}
-                          hideClearAll
-                          // disableDeleteOnBackspace
-                          fullWidth
-                          size="small"
-                          value={inputBoxCount[index].keyWords}
-                          onChange={(newValue) => {
-                            // console.log(newValue, newValue.length);
-                            if (newValue.length < 10) {
-                              handleChipChange(newValue, index);
-                            }
-                          }}
-                        />
-                      </Paper>
-                      <Typography
-                        variant="caption"
-                        align="center"
-                        color="textSecondary"
-                        sx={{ px: 0.7 }}>
-                        OR
-                      </Typography>
-                      <UploadButton />
-                    </Box>
-                    {error[index].url && (
-                      <FormHelperText error={error[index].url} color="error">
-                        Enter Valid Details
-                      </FormHelperText>
-                    )}
-                    {inputBoxCount[index].keyWords.length >= 10 && (
-                      <Typography variant="caption" color="error">
-                        Key words limit is exceeded
-                      </Typography>
-                    )}
-                  </Box>
-                </React.Fragment>
-              ))}
+                  </React.Fragment>
+                ))}
               <Button
                 onClick={handleSearch}
                 size="large"
                 sx={{ mt: 1, mb: 2 }}
                 endIcon={<SendIcon />}
-                variant="contained">
+                variant="contained"
+              >
                 Search
               </Button>
 
               <Typography
                 sx={{
-                  display: inputBoxCount.length === 10 ? "block" : "none",
+                  display: inputBoxCount?.length === 10 ? "block" : "none",
                 }}
                 variant="caption"
-                color="error">
+                color="error"
+              >
                 TextField limit is exceeded
               </Typography>
             </Box>
@@ -401,7 +536,8 @@ const Home = ({ isMdDown, isSmDown }) => {
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-            }}>
+            }}
+          >
             <CircularProgress />
           </Box>
         ) : null}
@@ -409,13 +545,10 @@ const Home = ({ isMdDown, isSmDown }) => {
           ? apiData.map((item) => (
               <>
                 <Accordion>
-                  <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
-                    id="panel1a-header">
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />} id="panel1a-header">
                     <Box sx={{ gap: 1 }} className={styles.middle}>
                       <Typography variant="body2">
-                        {typeof item?.whois_information?.domain_name ===
-                        "object"
+                        {typeof item?.whois_information?.domain_name === "object"
                           ? item?.whois_information?.domain_name[0]
                           : item?.whois_information?.domain_name}
                       </Typography>
@@ -429,45 +562,23 @@ const Home = ({ isMdDown, isSmDown }) => {
               </>
             ))
           : null}
-
-        {/* <Accordion>
-          <AccordionSummary
-            expandIcon={<ExpandMoreIcon />}
-            aria-controls="panel1a-content"
-            id="panel1a-header">
-            <Typography>Lists2</Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: 4,
-              }}>
-              <Box>
-                <Typography variant="body1">
-                  Domain Name: https://mui.com
-                </Typography>
-              </Box>
-              <Box sx={{ width: "50%" }}>
-                <Box sx={{ width: "100%", mr: 1 }}>
-                <LinearProgress
-                  variant="determinate"
-                  sx={{ height: 10, borderRadius: 5 }}
-                  value={50}
-                />
-                </Box>
-              </Box>
-              <Box>
-                <Button variant="contained" color="warning">
-                  Running
-                </Button>
-              </Box>
-            </Box>
-          </AccordionDetails>
-        </Accordion> */}
       </Container>
+
+      {/* snackBar for error and success messages */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        onClose={() => setSnackbarOpen(false)}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={snackbarType}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </>
   );
 };
