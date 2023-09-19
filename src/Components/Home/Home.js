@@ -62,7 +62,11 @@ const Home = ({ isMdDown, isSmDown }) => {
   const [snackbarType, setSnackbarType] = React.useState("error");
 
   const LightTooltip = styled(({ className, ...props }) => (
-    <Tooltip placement="bottom-start" {...props} classes={{ popper: className }} />
+    <Tooltip
+      // placement="bottom-end"
+      {...props}
+      classes={{ popper: className }}
+    />
   ))(({ theme }) => ({
     [`& .${tooltipClasses.tooltip}`]: {
       backgroundColor: theme.palette.common.white,
@@ -260,7 +264,7 @@ const Home = ({ isMdDown, isSmDown }) => {
     };
     axios(config)
       .then((response) => {
-        // console.log(response.data);
+        console.log(response.data);
         setApiData(response.data.data.value);
         setLoading(false);
       })
@@ -316,15 +320,13 @@ const Home = ({ isMdDown, isSmDown }) => {
               justifyContent: "flex-start",
               flexDirection: "column",
               // maxHeight: "90vh",
-            }}
-          >
+            }}>
             <Box sx={{ mt: 5 }}>
               <Typography
                 variant={isSmDown ? "h4" : isMdDown && !isSmDown ? "h3" : "h3"}
                 sx={{ mb: { sm: 4, xs: 0 } }}
                 align="center"
-                color="primary"
-              >
+                color="primary">
                 <b>Merchant Website Screening</b>
               </Typography>
             </Box>
@@ -335,16 +337,19 @@ const Home = ({ isMdDown, isSmDown }) => {
                 gap: 1,
                 height: "70vh",
                 overflowY: "scroll",
-              }}
-            >
+              }}>
               {inputBoxCount &&
                 inputBoxCount.map((el, index) => (
                   <React.Fragment key={el.id + index}>
                     <Box
                       sx={{ gap: 1, flexDirection: "column", mt: 2 }}
-                      className={styles.middle}
-                    >
-                      <Box className={styles.centered_noScroll} sx={{ gap: 3.5 }}>
+                      className={styles.middle}>
+                      <Box
+                        className={styles.centered_noScroll}
+                        sx={{
+                          gap: { sm: 3.5, xs: 2 },
+                          flexDirection: { xs: "column", sm: "row" },
+                        }}>
                         <FormControl>
                           <Paper
                             component="form"
@@ -354,8 +359,7 @@ const Home = ({ isMdDown, isSmDown }) => {
                               alignItems: "center",
                               width: 300,
                               height: 40,
-                            }}
-                          >
+                            }}>
                             <InputBase
                               multiline={false}
                               fullWidth={true}
@@ -368,37 +372,55 @@ const Home = ({ isMdDown, isSmDown }) => {
                           </Paper>
                         </FormControl>
                         {index === 0 ? (
-                          <>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 2,
+                            }}>
                             <Button
                               size="small"
                               variant="outlined"
                               disabled={index === 10 ? true : false}
                               color="primary"
-                              sx={{ height: 44 }}
-                              onClick={(e) => handleAddFields(inputBoxCount.length, e)}
-                            >
+                              sx={{ height: { sm: 44, xs: 44 } }}
+                              onClick={(e) =>
+                                handleAddFields(inputBoxCount.length, e)
+                              }>
                               <AddIcon />
                             </Button>
                             <Button
                               className={styles.centered}
-                              disabled={inputBoxCount.length === 1 ? true : false}
-                              sx={{ height: 44 }}
+                              disabled={
+                                inputBoxCount.length === 1 ? true : false
+                              }
+                              sx={{ height: { sm: 44, xs: 44 } }}
                               size="small"
                               variant="outlined"
                               color="error"
-                              onClick={handleDeleteFields}
-                            >
+                              onClick={handleDeleteFields}>
                               <RemoveIcon />
                             </Button>
-                          </>
+                          </Box>
                         ) : (
                           <>
-                            <Button disabled={true} size="small" variant="text"></Button>
-                            <Button disabled={true} size="small" variant="text"></Button>
+                            <Button
+                              disabled={true}
+                              size="small"
+                              variant="text"></Button>
+                            <Button
+                              disabled={true}
+                              size="small"
+                              variant="text"></Button>
                           </>
                         )}
                       </Box>
-                      <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          flexDirection: { sm: "row", xs: "column" },
+                        }}>
                         <Paper
                           component="form"
                           id={index}
@@ -409,8 +431,7 @@ const Home = ({ isMdDown, isSmDown }) => {
                             width: 300,
                             minHeight: 60,
                             overflow: "scroll",
-                          }}
-                        >
+                          }}>
                           <MuiChipsInput
                             sx={{ "& fieldset": { border: "none" } }}
                             hideClearAll
@@ -430,16 +451,16 @@ const Home = ({ isMdDown, isSmDown }) => {
                           variant="caption"
                           align="center"
                           color="textSecondary"
-                          sx={{ px: 0.7 }}
-                        >
+                          sx={{ px: 0.7 }}>
                           OR
                         </Typography>
                         <Button
                           // onClick={handleUploadButtonClick}
                           variant="contained"
                           component="label"
-                          startIcon={<CloudUploadOutlinedIcon color="textSecondary" />}
-                        >
+                          startIcon={
+                            <CloudUploadOutlinedIcon color="textSecondary" />
+                          }>
                           Upload a File
                           <input
                             type="file"
@@ -450,6 +471,7 @@ const Home = ({ isMdDown, isSmDown }) => {
                           />
                         </Button>
                         <LightTooltip
+                          placement="bottom-start"
                           title={
                             <>
                               <Typography variant="caption">
@@ -458,28 +480,28 @@ const Home = ({ isMdDown, isSmDown }) => {
                                 2. Keywords has to be lesser than 500
                               </Typography>
                               <br />
-                              <Stack direction="column" align="center" sx={{ mt: 0.5 }}>
+                              <Stack
+                                direction="column"
+                                align="center"
+                                sx={{ mt: 0.5 }}>
                                 <CSVLink {...csvlink} target="_blank">
                                   <Button
                                     sx={{ alignItems: "center" }}
                                     size="small"
-                                    variant="outlined"
-                                  >
+                                    variant="outlined">
                                     Download Sample File
                                   </Button>
                                 </CSVLink>
                               </Stack>
                             </>
-                          }
-                        >
+                          }>
                           <IconButton
                             size="small"
                             // aria-owns={open ? "mouse-over-popover" : undefined}
                             // aria-haspopup="true"
                             // onMouseEnter={handlePopoverOpen}
                             // onMouseLeave={handlePopoverClose}
-                            sx={{ ml: 1 }}
-                          >
+                            sx={{ ml: 1 }}>
                             <InfoOutlinedIcon />
                           </IconButton>
                         </LightTooltip>
@@ -502,8 +524,7 @@ const Home = ({ isMdDown, isSmDown }) => {
                 size="large"
                 sx={{ mt: 1, mb: 2 }}
                 endIcon={<SendIcon />}
-                variant="contained"
-              >
+                variant="contained">
                 Search
               </Button>
 
@@ -512,8 +533,7 @@ const Home = ({ isMdDown, isSmDown }) => {
                   display: inputBoxCount?.length === 10 ? "block" : "none",
                 }}
                 variant="caption"
-                color="error"
-              >
+                color="error">
                 TextField limit is exceeded
               </Typography>
             </Box>
@@ -528,40 +548,107 @@ const Home = ({ isMdDown, isSmDown }) => {
           <b>Website Searches</b>
         </Typography>
         {loading ? (
+          <>
+            <Box
+              sx={{
+                height: 200,
+                border: "1px solid #E8E8E8",
+                width: "100%",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+              }}>
+              <CircularProgress />
+            </Box>
+          </>
+        ) : (
+          <>
+            {!loading && apiData && apiData.length ? (
+              apiData.map((item) => (
+                <>
+                  <Accordion>
+                    <AccordionSummary
+                      expandIcon={<ExpandMoreIcon />}
+                      id="panel1a-header">
+                      <Box sx={{ gap: 1 }} className={styles.middle}>
+                        <Typography variant="body2">
+                          {typeof item?.whois_information?.domain_name ===
+                          "object"
+                            ? item?.whois_information?.domain_name[0]
+                            : item?.whois_information?.domain_name}
+                        </Typography>
+                      </Box>
+                    </AccordionSummary>
+                    <Divider />
+                    <AccordionDetails>
+                      <Result data={item} />
+                    </AccordionDetails>
+                  </Accordion>
+                </>
+              ))
+            ) : (
+              <Box
+                sx={{
+                  width: "100%",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}>
+                <Typography variant="body1" color="error" align="center">
+                  <center>No Past Searches Found !</center>
+                </Typography>
+              </Box>
+            )}
+          </>
+        )}
+        {/* {loading ? (
           <Box
             sx={{
-              height: 300,
+              height: 200,
               border: "1px solid #E8E8E8",
               width: "100%",
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-            }}
-          >
+            }}>
             <CircularProgress />
           </Box>
         ) : null}
-        {!loading && apiData && apiData.length
-          ? apiData.map((item) => (
-              <>
-                <Accordion>
-                  <AccordionSummary expandIcon={<ExpandMoreIcon />} id="panel1a-header">
-                    <Box sx={{ gap: 1 }} className={styles.middle}>
-                      <Typography variant="body2">
-                        {typeof item?.whois_information?.domain_name === "object"
-                          ? item?.whois_information?.domain_name[0]
-                          : item?.whois_information?.domain_name}
-                      </Typography>
-                    </Box>
-                  </AccordionSummary>
-                  <Divider />
-                  <AccordionDetails>
-                    <Result data={item} />
-                  </AccordionDetails>
-                </Accordion>
-              </>
-            ))
-          : null}
+        {!loading && apiData && apiData.length ? (
+          apiData.map((item) => (
+            <>
+              <Accordion>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon />}
+                  id="panel1a-header">
+                  <Box sx={{ gap: 1 }} className={styles.middle}>
+                    <Typography variant="body2">
+                      {typeof item?.whois_information?.domain_name === "object"
+                        ? item?.whois_information?.domain_name[0]
+                        : item?.whois_information?.domain_name}
+                    </Typography>
+                  </Box>
+                </AccordionSummary>
+                <Divider />
+                <AccordionDetails>
+                  <Result data={item} />
+                </AccordionDetails>
+              </Accordion>
+            </>
+          ))
+        ) : (
+          <Box
+            sx={{
+              width: "100%",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}>
+            <Typography variant="body1" color="error" align="center">
+              <center>No Past Searches Found!</center>
+            </Typography>
+          </Box>
+        )} */}
       </Container>
 
       {/* snackBar for error and success messages */}
@@ -569,13 +656,11 @@ const Home = ({ isMdDown, isSmDown }) => {
         open={snackbarOpen}
         autoHideDuration={4000}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        onClose={() => setSnackbarOpen(false)}
-      >
+        onClose={() => setSnackbarOpen(false)}>
         <Alert
           onClose={() => setSnackbarOpen(false)}
           severity={snackbarType}
-          sx={{ width: "100%" }}
-        >
+          sx={{ width: "100%" }}>
           {snackbarMessage}
         </Alert>
       </Snackbar>
