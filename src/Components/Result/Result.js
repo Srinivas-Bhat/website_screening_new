@@ -17,8 +17,7 @@ import ContactMailIcon from "@mui/icons-material/ContactMail";
 import styles from "../../styles/View.module.css";
 import moment from "moment";
 
-const Result = ({ data }) => {
-  // console.log(data);
+const Result = ({ data, isMdDown, isSmDown }) => {
   const navigate = useNavigate();
   const [websiteDetails, setWebsiteDetails] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -58,6 +57,7 @@ const Result = ({ data }) => {
       <Container>
         <Box sx={{ position: "relative", minHeight: "35vh" }}>
           <Grid
+            align="center"
             container
             sx={{
               position: "absolute",
@@ -65,7 +65,7 @@ const Result = ({ data }) => {
             }}>
             <Grid item xs={12} sm={3} className={styles.centered}>
               {loading ? (
-                <Skeleton variant="circular" width={150} height={150} />
+                <Skeleton variant="circular" width={120} height={120} />
               ) : (
                 <Box
                   sx={{
@@ -82,7 +82,7 @@ const Result = ({ data }) => {
                     width={"100%"}
                     height={"100%"}
                     alt="logo"
-                    style={{ objectFit: "cover", borderRadius: "50%" }}
+                    style={{ objectFit: "contain", borderRadius: "50%" }}
                   />
                   <Typography
                     variant="body1"
@@ -96,10 +96,10 @@ const Result = ({ data }) => {
                 </Box>
               )}
             </Grid>
-            <Grid item xs={12} sm={7} className={styles.centered}>
+            <Grid item xs={12} sm={6} md={7} className={styles.centered}>
               <Stack direction="column">
                 <Typography
-                  variant="h3"
+                  variant={isSmDown ? "h5" : isMdDown ? "h5" : "h4"}
                   color="primary"
                   sx={{ ":first-letter": { textTransform: "uppercase" } }}>
                   <b>
@@ -111,17 +111,33 @@ const Result = ({ data }) => {
                 <Typography
                   variant="body2"
                   color="textSecondary"
+                  align="center"
                   sx={{ my: 1 }}>
                   {websiteDetails?.title}
                 </Typography>
               </Stack>
             </Grid>
-            <Grid item xs={12} sm={2}>
-              <Box sx={{ display: "flex", gap: 2 }}>
-                <Button variant="contained" size="small" color="warning">
-                  RUNNING
-                </Button>
-                {!data?.website_exists ? (
+            <Grid
+              item
+              xs={12}
+              sm={3}
+              md={2}
+              sx={{ mt: { xs: 1, sm: 0 } }}
+              className={styles.centered}>
+              <Box sx={{ display: "flex", gap: { xs: 2, sm: 1, md: 2 } }}>
+                {Math.abs(
+                  (new Date() - new Date(data.created_at)) /
+                    (1000 * 60 * 60 * 24)
+                ) >= 1 ? (
+                  <Button variant="contained" size="small" color="success">
+                    COMPLETED
+                  </Button>
+                ) : (
+                  <Button variant="contained" size="small" color="warning">
+                    RUNNING
+                  </Button>
+                )}
+                {data?.website_exists === "false" ? (
                   <Button variant="contained" size="small" disabled={true}>
                     VIEW
                   </Button>
@@ -139,7 +155,9 @@ const Result = ({ data }) => {
         </Box>
       </Container>
       {/* <Box sx={{ minHeight: 600 }}> */}
-      <Grid container sx={{ border: "1px solid #f2f2f2" }}>
+      <Grid
+        container
+        sx={{ border: "1px solid #f2f2f2", mt: { xs: 10, sm: 0 } }}>
         <Grid
           item
           xs={12}

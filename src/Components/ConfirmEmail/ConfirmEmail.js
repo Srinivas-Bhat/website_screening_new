@@ -29,6 +29,10 @@ function ConfirmEmail() {
   const [snackbarMessage, setSnacbarMessage] = useState("");
   const [snackbarType, setSnackbarType] = useState("error");
   const [userEmail, setUserEmail] = useState("");
+  const [error, setError] = useState({
+    email: false,
+    otp: false,
+  });
   const [userOtp, setUserOtp] = useState("");
   const { email, otp } = useParams();
   const navigate = useNavigate();
@@ -39,33 +43,43 @@ function ConfirmEmail() {
   }, [email, otp]);
 
   const handleConfirmEmail = () => {
-    let config = {
-      method: "POST",
-      url: `${process.env.REACT_APP_WEBSITE_SCREENING}/verify-otp`, //get-data-from-user-id
-      headers: {
-        "Content-Type": "application/json",
-      },
-      data: {
-        email: email,
-        otp: otp,
-      },
-    };
-    axios(config)
-      .then((response) => {
-        console.log(response.data);
-        setSnackbarOpen(true);
-        setSnacbarMessage(response.data?.data);
-        setSnackbarType("success");
-        setTimeout(() => {
-          navigate("/login");
-        }, 2000);
-      })
-      .catch((error) => {
-        console.log(error);
-        setSnackbarOpen(true);
-        setSnacbarMessage("Some error occurred");
-        setSnackbarType("error");
-      });
+    if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
+      if (/^[0-9]+$/.test(otp) && otp.trim().length) {
+        let config = {
+          method: "POST",
+          url: `${process.env.REACT_APP_WEBSITE_SCREENING}/verify-otp`, //get-data-from-user-id
+          headers: {
+            "Content-Type": "application/json",
+          },
+          data: {
+            email: email,
+            otp: otp,
+          },
+        };
+        axios(config)
+          .then((response) => {
+            console.log(response.data);
+            setSnackbarOpen(true);
+            setSnacbarMessage(response.data?.data);
+            setSnackbarType("success");
+            setError({ ...error, email: false });
+            setError({ ...error, otp: false });
+            setTimeout(() => {
+              navigate("/login");
+            }, 2000);
+          })
+          .catch((error) => {
+            console.log(error);
+            setSnackbarOpen(true);
+            setSnacbarMessage("Some error occurred");
+            setSnackbarType("error");
+          });
+      } else {
+        setError({ ...error, otp: true });
+      }
+    } else {
+      setError({ ...error, email: true });
+    }
   };
 
   const handleResendEmail = () => {
@@ -82,7 +96,9 @@ function ConfirmEmail() {
     axios(config)
       .then((response) => {
         console.log(response.data);
-        // navigate("/confirm-email");
+        setTimeout(() => {
+          navigate("/confirm-email");
+        }, 2000);
       })
       .catch((error) => {
         console.log(error);
@@ -119,12 +135,13 @@ function ConfirmEmail() {
             </Typography> */}
             <Divider sx={{ fontSize: "14px", my: 2 }} />
           </Box>
-          <Stack direction="column" spacing={2}>
+          <Stack direction="column" spacing={0}>
             <Box>
               <Typography variant="body1">
                 <b>Email</b>
               </Typography>
               <TextField
+                color={error.email ? "error" : "primary"}
                 margin="normal"
                 type="email"
                 size="small"
@@ -136,6 +153,7 @@ function ConfirmEmail() {
                 autoComplete="email"
                 value={userEmail}
                 onChange={(e) => handleInputs(e, "email")}
+                helperText={error.email ? "Enter a valid email" : " "}
               />
             </Box>
             <Box>
@@ -173,13 +191,11 @@ function ConfirmEmail() {
         open={snackbarOpen}
         // autoHideDuration={4000}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        onClose={() => setSnackbarOpen(false)}
-      >
+        onClose={() => setSnackbarOpen(false)}>
         <Alert
           onClose={() => setSnackbarOpen(false)}
           severity={snackbarType}
-          sx={{ width: "100%" }}
-        >
+          sx={{ width: "100%" }}>
           {snackbarMessage}
         </Alert>
       </Snackbar>

@@ -34,15 +34,17 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { styled } from "@mui/material/styles";
 import Tooltip, { tooltipClasses } from "@mui/material/Tooltip";
 import { CSVLink, CSVDownload } from "react-csv";
+import { useNavigate } from "react-router-dom";
 
 const Home = ({ isMdDown, isSmDown }) => {
+  const navigate = useNavigate();
   const userId = JSON.parse(localStorage.getItem("websiteScreening"))?.userId;
   const [inputBoxCount, setInputBoxCount] = useState([
     {
       type: "text",
       id: 0,
       url: "",
-      keyWords: [],
+      keywords: [],
       csvKeyWords: null,
     },
   ]);
@@ -53,7 +55,7 @@ const Home = ({ isMdDown, isSmDown }) => {
     {
       id: 0,
       url: false,
-      keyWords: false,
+      keywords: false,
       csvKeyWords: false,
     },
   ]);
@@ -76,6 +78,7 @@ const Home = ({ isMdDown, isSmDown }) => {
     },
   }));
 
+  // eslint-disable-next-line no-lone-blocks
   {
     /* CSV Sample file download configuration */
   }
@@ -87,7 +90,7 @@ const Home = ({ isMdDown, isSmDown }) => {
     { keywords: "Drugs" },
   ];
   const csvlink = {
-    filename: "keywordssss.csv",
+    filename: "keywords.csv",
     headers: csvHeaders,
     data: csvData,
   };
@@ -101,7 +104,7 @@ const Home = ({ isMdDown, isSmDown }) => {
             type: "text",
             id: index,
             url: "",
-            keyWords: [],
+            keywords: [],
             csvKeyWords: null,
           },
         ];
@@ -112,7 +115,7 @@ const Home = ({ isMdDown, isSmDown }) => {
           {
             id: 0,
             url: false,
-            keyWords: false,
+            keywords: false,
             csvKeyWords: false,
           },
         ];
@@ -134,8 +137,8 @@ const Home = ({ isMdDown, isSmDown }) => {
     const index = ind;
     setInputBoxCount((s) => {
       const newArr = s.slice();
-      if (newArr[index].keyWords.length < 10) {
-        newArr[index].keyWords = newChips;
+      if (newArr[index].keywords.length < 10) {
+        newArr[index].keywords = newChips;
       }
 
       return newArr;
@@ -175,7 +178,7 @@ const Home = ({ isMdDown, isSmDown }) => {
       //     return newErrorArr;
       //   });
       // }
-      // if (item.keyWords.length === 0) {
+      // if (item.keywords.length === 0) {
       //   setError((s) => {
       //     const newErrorArr = s.slice();
       //     newErrorArr[item.id].keyWords = true;
@@ -194,10 +197,10 @@ const Home = ({ isMdDown, isSmDown }) => {
           newErrorArr[item.id].url = false;
           return newErrorArr;
         });
-        if (item?.keyWords?.length > 0 || item?.csvKeyWords?.length) {
+        if (item?.keywords?.length > 0 || item?.csvKeyWords?.length) {
           setError((s) => {
             const newErrorArr = s.slice();
-            newErrorArr[item.id].keyWords = false;
+            newErrorArr[item.id].keywords = false;
             return newErrorArr;
           });
           setError((s) => {
@@ -209,7 +212,7 @@ const Home = ({ isMdDown, isSmDown }) => {
         } else {
           setError((s) => {
             const newErrorArr = s.slice();
-            newErrorArr[item.id].keyWords = true;
+            newErrorArr[item.id].keywords = true;
             return newErrorArr;
           });
           setSnackbarOpen(true);
@@ -235,22 +238,107 @@ const Home = ({ isMdDown, isSmDown }) => {
 
   const handleSearch = (e) => {
     let a = validateFields();
-    console.log(a, error);
+    // console.log(a, error);
     if (a.includes(true)) {
       console.log("sorry");
     } else {
       console.log("Success");
+      let arr = [];
+      for (let i = 0; i < inputBoxCount?.length; i++) {
+        // console.log(i, inputBoxCount[i]);
+        let fraudKeyWords;
+        if (
+          inputBoxCount[i]?.keywords?.length &&
+          inputBoxCount[i]?.csvKeyWords?.length
+        ) {
+          fraudKeyWords = [
+            ...inputBoxCount[i]?.keywords,
+            ...inputBoxCount[i]?.csvKeyWords,
+          ];
+        } else if (inputBoxCount[i]?.keywords?.length) {
+          fraudKeyWords = [...inputBoxCount[i]?.keywords];
+        } else {
+          fraudKeyWords = [...inputBoxCount[i]?.csvKeyWords];
+        }
+        let obj = {
+          url: inputBoxCount[i]?.url,
+          keywords: fraudKeyWords,
+        };
+        arr.push(obj);
+      }
+      // console.log(arr);
+      handleSearchClick(arr);
     }
-    // console.log(flag);
-    // if (flag) {
-    //   alert("sorry folks");
-    // } else {
-    // console.log(Object.values(error));
-    // console.log(inputBoxCount);
-    // }
   };
 
-  const handleSecondInternalAPICall = () => {
+  const handleSearchClick = (arr) => {
+    // e.preventDefault();
+    // console.log(searchInput);
+    // setFirstLoading(true);
+    setLoading(true);
+    // setTimeout(() => {
+    //   navigate("/dashboard");
+    // }, 3000);
+    var config = {
+      method: "POST",
+      url: `https://merchant-website-screening.trustcheckr.com/url-screening`,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      data: {
+        user_id: JSON.parse(localStorage.getItem("websiteScreening")).userId,
+        user_data: arr,
+      },
+    };
+    axios(config)
+      .then((response) => {
+        // setFirstLoading(false);
+        console.log(response.data, response.status);
+        // if (response.data.message === "Done") {
+        //   // handleSecondInternalAPICall();
+        // }
+        if (response.status === 200) {
+          for (let item of arr) {
+            console.log(item);
+            handleInternalAPICall(item);
+          }
+        }
+      })
+      .catch((error) => {
+        // setFirstLoading(false);
+        console.log(error);
+      });
+  };
+
+  const handleInternalAPICall = (item) => {
+    // setSecondLoading(true);
+    console.log(item);
+    var config = {
+      method: "POST",
+      url: `https://merchant-website-screening.trustcheckr.com/get-inline-url`,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      data: {
+        base_url: item.url,
+        url: [item.url],
+      },
+    };
+    axios(config)
+      .then((response) => {
+        // setSecondLoading(false);
+        console.log(response.data);
+        if (response.status === 200) {
+          handleGetDataFromUserId();
+        }
+      })
+      .catch((error) => {
+        // setSecondLoading(false);
+        console.log(error);
+      });
+  };
+
+  const handleGetDataFromUserId = () => {
     setLoading(true);
     let config = {
       method: "POST",
@@ -264,8 +352,8 @@ const Home = ({ isMdDown, isSmDown }) => {
     };
     axios(config)
       .then((response) => {
-        console.log(response.data);
-        setApiData(response.data.data.value);
+        // console.log(response.data);
+        setApiData(response.data?.data?.value);
         setLoading(false);
       })
       .catch((error) => {
@@ -276,7 +364,6 @@ const Home = ({ isMdDown, isSmDown }) => {
   };
 
   const handleCSVUpload = (event, index) => {
-    console.log("i");
     const fileUploaded = event.target.files[0];
     let data = new FormData();
     data.append("csv_file", fileUploaded);
@@ -303,7 +390,7 @@ const Home = ({ isMdDown, isSmDown }) => {
   };
 
   useEffect(() => {
-    handleSecondInternalAPICall();
+    handleGetDataFromUserId();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -367,7 +454,6 @@ const Home = ({ isMdDown, isSmDown }) => {
                               sx={{ ml: 1, flex: 1 }}
                               onChange={(e) => handleChange(e)}
                               placeholder="Enter URL ex: https://example.com"
-                              // inputProps={{ "aria-label": "search google maps" }}
                             />
                           </Paper>
                         </FormControl>
@@ -438,7 +524,7 @@ const Home = ({ isMdDown, isSmDown }) => {
                             // disableDeleteOnBackspace
                             fullWidth
                             size="small"
-                            value={inputBoxCount[index].keyWords}
+                            value={inputBoxCount[index].keywords}
                             onChange={(newValue) => {
                               // console.log(newValue, newValue.length);
                               if (newValue.length < 10) {
@@ -454,65 +540,127 @@ const Home = ({ isMdDown, isSmDown }) => {
                           sx={{ px: 0.7 }}>
                           OR
                         </Typography>
-                        <Button
-                          // onClick={handleUploadButtonClick}
-                          variant="contained"
-                          component="label"
-                          startIcon={
-                            <CloudUploadOutlinedIcon color="textSecondary" />
-                          }>
-                          Upload a File
-                          <input
-                            type="file"
-                            accept=".csv"
-                            ref={hiddenFileInput}
-                            hidden
-                            onChange={(e) => handleCSVUpload(e, index)}
-                          />
-                        </Button>
-                        <LightTooltip
-                          placement="bottom-start"
-                          title={
-                            <>
-                              <Typography variant="caption">
-                                1.Heading of the CSV file should be 'keywords'.
-                                <br />
-                                2. Keywords has to be lesser than 500
-                              </Typography>
-                              <br />
-                              <Stack
-                                direction="column"
-                                align="center"
-                                sx={{ mt: 0.5 }}>
-                                <CSVLink {...csvlink} target="_blank">
-                                  <Button
-                                    sx={{ alignItems: "center" }}
-                                    size="small"
-                                    variant="outlined">
-                                    Download Sample File
-                                  </Button>
-                                </CSVLink>
-                              </Stack>
-                            </>
-                          }>
-                          <IconButton
-                            size="small"
-                            // aria-owns={open ? "mouse-over-popover" : undefined}
-                            // aria-haspopup="true"
-                            // onMouseEnter={handlePopoverOpen}
-                            // onMouseLeave={handlePopoverClose}
-                            sx={{ ml: 1 }}>
-                            <InfoOutlinedIcon />
-                          </IconButton>
-                        </LightTooltip>
+                        {inputBoxCount[index].csvKeyWords &&
+                        inputBoxCount[index].csvKeyWords.length ? (
+                          <>
+                            <Button
+                              // onClick={handleUploadButtonClick}
+                              variant="contained"
+                              component="label"
+                              color="success"
+                              startIcon={
+                                <CloudUploadOutlinedIcon color="textSecondary" />
+                              }>
+                              File Uploaded
+                              <input
+                                type="file"
+                                accept=".csv"
+                                ref={hiddenFileInput}
+                                hidden
+                                onChange={(e) => handleCSVUpload(e, index)}
+                              />
+                            </Button>
+                            <LightTooltip
+                              placement="bottom-start"
+                              title={
+                                <>
+                                  <Typography variant="caption">
+                                    1.Heading of the CSV file should be
+                                    'keywords'.
+                                    <br />
+                                    2. Keywords has to be lesser than 500
+                                  </Typography>
+                                  <br />
+                                  <Stack
+                                    direction="column"
+                                    align="center"
+                                    sx={{ mt: 0.5 }}>
+                                    <CSVLink {...csvlink} target="_blank">
+                                      <Button
+                                        sx={{ alignItems: "center" }}
+                                        size="small"
+                                        variant="outlined">
+                                        Download Sample File
+                                      </Button>
+                                    </CSVLink>
+                                  </Stack>
+                                </>
+                              }>
+                              <IconButton
+                                size="small"
+                                // aria-owns={open ? "mouse-over-popover" : undefined}
+                                // aria-haspopup="true"
+                                // onMouseEnter={handlePopoverOpen}
+                                // onMouseLeave={handlePopoverClose}
+                                sx={{ ml: 1 }}>
+                                <InfoOutlinedIcon />
+                              </IconButton>
+                            </LightTooltip>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              // onClick={handleUploadButtonClick}
+                              variant="contained"
+                              component="label"
+                              startIcon={
+                                <CloudUploadOutlinedIcon color="textSecondary" />
+                              }>
+                              Upload a File
+                              <input
+                                type="file"
+                                accept=".csv"
+                                ref={hiddenFileInput}
+                                hidden
+                                onChange={(e) => handleCSVUpload(e, index)}
+                              />
+                            </Button>
+                            <LightTooltip
+                              placement="bottom-start"
+                              title={
+                                <>
+                                  <Typography variant="caption">
+                                    1.Heading of the CSV file should be
+                                    'keywords'.
+                                    <br />
+                                    2. Keywords has to be lesser than 500
+                                  </Typography>
+                                  <br />
+                                  <Stack
+                                    direction="column"
+                                    align="center"
+                                    sx={{ mt: 0.5 }}>
+                                    <CSVLink {...csvlink} target="_blank">
+                                      <Button
+                                        sx={{ alignItems: "center" }}
+                                        size="small"
+                                        variant="outlined">
+                                        Download Sample File
+                                      </Button>
+                                    </CSVLink>
+                                  </Stack>
+                                </>
+                              }>
+                              <IconButton
+                                size="small"
+                                // aria-owns={open ? "mouse-over-popover" : undefined}
+                                // aria-haspopup="true"
+                                // onMouseEnter={handlePopoverOpen}
+                                // onMouseLeave={handlePopoverClose}
+                                sx={{ ml: 1 }}>
+                                <InfoOutlinedIcon />
+                              </IconButton>
+                            </LightTooltip>
+                          </>
+                        )}
                       </Box>
                       {error[index].url && (
                         <FormHelperText error={error[index].url} color="error">
                           Enter Valid Details
                         </FormHelperText>
                       )}
-                      {inputBoxCount[index].keyWords.length >= 10 && (
-                        <Typography variant="caption" color="error">
+                      {inputBoxCount[index].keywords.length >= 10 && (
+                        <Typography variant="body2" color="error">
                           Key words limit is exceeded
                         </Typography>
                       )}
@@ -523,7 +671,13 @@ const Home = ({ isMdDown, isSmDown }) => {
                 onClick={handleSearch}
                 size="large"
                 sx={{ mt: 1, mb: 2 }}
-                endIcon={<SendIcon />}
+                // disabled={loading ? true : false}
+                endIcon={
+                  // loading ? (
+                  //   <CircularProgress sx={{ color: "#fff" }} size={20} />
+                  // ) : (
+                  <SendIcon />
+                }
                 variant="contained">
                 Search
               </Button>
@@ -564,27 +718,33 @@ const Home = ({ isMdDown, isSmDown }) => {
         ) : (
           <>
             {!loading && apiData && apiData.length ? (
-              apiData.map((item) => (
-                <>
+              apiData.map((item, index) => (
+                <React.Fragment key={index + item?.base_url}>
                   <Accordion>
                     <AccordionSummary
                       expandIcon={<ExpandMoreIcon />}
                       id="panel1a-header">
                       <Box sx={{ gap: 1 }} className={styles.middle}>
                         <Typography variant="body2">
-                          {typeof item?.whois_information?.domain_name ===
-                          "object"
-                            ? item?.whois_information?.domain_name[0]
-                            : item?.whois_information?.domain_name}
+                          {item?.whois_information?.domain_name
+                            ? typeof item?.whois_information?.domain_name ===
+                              "object"
+                              ? item?.whois_information?.domain_name[0]
+                              : item?.whois_information?.domain_name
+                            : item?.base_url}
                         </Typography>
                       </Box>
                     </AccordionSummary>
                     <Divider />
                     <AccordionDetails>
-                      <Result data={item} />
+                      <Result
+                        data={item}
+                        isSmDown={isSmDown}
+                        isMdDown={isMdDown}
+                      />
                     </AccordionDetails>
                   </Accordion>
-                </>
+                </React.Fragment>
               ))
             ) : (
               <Box
@@ -594,9 +754,11 @@ const Home = ({ isMdDown, isSmDown }) => {
                   justifyContent: "center",
                   alignItems: "center",
                 }}>
-                <Typography variant="body1" color="error" align="center">
-                  <center>No Past Searches Found !</center>
-                </Typography>
+                <center>
+                  <Typography variant="body1" color="error" align="center">
+                    No Past Searches Found !
+                  </Typography>
+                </center>
               </Box>
             )}
           </>

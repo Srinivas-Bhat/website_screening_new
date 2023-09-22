@@ -92,7 +92,7 @@ const Login = () => {
               );
               setTimeout(() => {
                 navigate("/");
-              }, 1050);
+              }, 2500);
             } else {
               setSnackbarOpen(true);
               setSnackbarType("error");
@@ -140,13 +140,11 @@ const Login = () => {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-        }}
-      >
+        }}>
         <Link
           href="/"
           underline="none"
-          sx={{ display: "flex", alignItems: "center", mb: 2 }}
-        >
+          sx={{ display: "flex", alignItems: "center", mb: 2 }}>
           <img src={tcIcon} alt="icon" height={30} width={30} />
           <Typography variant="h5" sx={{ ml: 1 }}>
             <b>TrustCheckr</b>
@@ -156,7 +154,11 @@ const Login = () => {
           <Typography variant="h5" align="center" sx={{ mb: 0.5 }}>
             <b>Login</b>
           </Typography>
-          <Typography variant="body2" align="center" color="textSecondary" sx={{ mb: 3 }}>
+          <Typography
+            variant="body2"
+            align="center"
+            color="textSecondary"
+            sx={{ mb: 3 }}>
             Welcome back! Please login to your account
           </Typography>
           <Divider sx={{ fontSize: "14px", my: 3 }}></Divider>
@@ -200,8 +202,7 @@ const Login = () => {
                   <InputAdornment position="end">
                     <IconButton
                       aria-label="toggle password visibility"
-                      onClick={handleClickShowPassword}
-                    >
+                      onClick={handleClickShowPassword}>
                       {showPassword ? <Visibility /> : <VisibilityOff />}
                     </IconButton>
                   </InputAdornment>
@@ -214,8 +215,7 @@ const Login = () => {
               onClick={handleSubmit}
               fullWidth
               variant="contained"
-              sx={{ mt: 3, mb: 2 }}
-            >
+              sx={{ mt: 3, mb: 2 }}>
               Log In
             </Button>
           </Box>
@@ -230,13 +230,11 @@ const Login = () => {
         open={snackbarOpen}
         autoHideDuration={4000}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        onClose={() => setSnackbarOpen(false)}
-      >
+        onClose={() => setSnackbarOpen(false)}>
         <Alert
           onClose={() => setSnackbarOpen(false)}
           severity={snackbarType}
-          sx={{ width: "100%" }}
-        >
+          sx={{ width: "100%" }}>
           {snackbarMessage}
         </Alert>
       </Snackbar>
