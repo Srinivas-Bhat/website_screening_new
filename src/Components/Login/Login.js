@@ -56,13 +56,6 @@ const Login = () => {
   // handleSubmit function for login
   const handleSubmit = async (event) => {
     event.preventDefault();
-    // let data = new FormData();
-    // data.append("email", email);
-    // data.append("password", password);
-    // console.log({
-    //   email: data.get("email"),
-    //   password: data.get("password"),
-    // });
     if (email !== "" && email.trim().length > 0 && !emailError) {
       if (password !== "" && password.trim().length > 0 && !passwordError) {
         let data = {
@@ -77,7 +70,7 @@ const Login = () => {
         };
         await axios(config)
           .then((response) => {
-            console.log(response.data);
+            // console.log(response.data);
             if (response.status === 200 || response.status === 201) {
               setSnackbarOpen(true);
               setSnackbarType("success");
@@ -101,7 +94,7 @@ const Login = () => {
           })
           .catch((error) => {
             console.log(error);
-            console.log("im throwing error", error?.response?.data?.error);
+            // console.log("im throwing error", error?.response?.data?.error);
             if (error?.response?.data?.showErrToUser) {
               setSnackbarType("error");
               setSnackbarOpen(true);

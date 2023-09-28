@@ -14,7 +14,6 @@ import {
   IconButton,
   InputBase,
   Paper,
-  Popover,
   Snackbar,
   Stack,
   Typography,
@@ -28,12 +27,11 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import RemoveIcon from "@mui/icons-material/Remove";
 import axios from "axios";
 import Result from "../Result/Result";
-import UploadButton from "../Common/UploadButton";
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { styled } from "@mui/material/styles";
 import Tooltip, { tooltipClasses } from "@mui/material/Tooltip";
-import { CSVLink, CSVDownload } from "react-csv";
+import { CSVLink } from "react-csv";
 import { useNavigate } from "react-router-dom";
 
 const Home = ({ isMdDown, isSmDown }) => {
@@ -48,7 +46,10 @@ const Home = ({ isMdDown, isSmDown }) => {
       csvKeyWords: null,
     },
   ]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState({
+    createJob: false,
+    userIdData: false,
+  });
   const [apiData, setApiData] = useState(null);
   const hiddenFileInput = useRef(null);
   const [error, setError] = useState([
@@ -59,9 +60,9 @@ const Home = ({ isMdDown, isSmDown }) => {
       csvKeyWords: false,
     },
   ]);
-  const [snackbarOpen, setSnackbarOpen] = React.useState(false);
-  const [snackbarMessage, setSnackbarMessage] = React.useState("");
-  const [snackbarType, setSnackbarType] = React.useState("error");
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarType, setSnackbarType] = useState("error");
 
   const LightTooltip = styled(({ className, ...props }) => (
     <Tooltip
@@ -128,7 +129,8 @@ const Home = ({ isMdDown, isSmDown }) => {
     const index = e.target.id;
     setInputBoxCount((s) => {
       const newArr = s.slice();
-      newArr[index].url = e.target.value;
+      let { value } = e.target;
+      newArr[index].url = value;
       return newArr;
     });
   };
@@ -159,38 +161,10 @@ const Home = ({ isMdDown, isSmDown }) => {
   };
 
   const validateFields = () => {
-    // inputBoxCount &&
     let a = inputBoxCount.map((item, index) => {
       let urlRegex =
         /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})/;
       let isValid = urlRegex.test(item?.url?.trim());
-      // if (!isValid) {
-      //   setError((s) => {
-      //     const newErrorArr = s.slice();
-      //     newErrorArr[item.id].url = true;
-      //     return newErrorArr;
-      //   });
-      //   Errorflag = true;
-      // } else {
-      //   setError((s) => {
-      //     const newErrorArr = s.slice();
-      //     newErrorArr[item.id].url = false;
-      //     return newErrorArr;
-      //   });
-      // }
-      // if (item.keywords.length === 0) {
-      //   setError((s) => {
-      //     const newErrorArr = s.slice();
-      //     newErrorArr[item.id].keyWords = true;
-      //     return newErrorArr;
-      //   });
-      // } else {
-      //   setError((s) => {
-      //     const newErrorArr = s.slice();
-      //     newErrorArr[item.id].keyWords = false;
-      //     return newErrorArr;
-      //   });
-      // }
       if (isValid) {
         setError((s) => {
           const newErrorArr = s.slice();
@@ -232,20 +206,17 @@ const Home = ({ isMdDown, isSmDown }) => {
         return true;
       }
     });
-    // console.log(a);
     return a;
   };
 
   const handleSearch = (e) => {
     let a = validateFields();
-    // console.log(a, error);
     if (a.includes(true)) {
       console.log("sorry");
     } else {
       console.log("Success");
       let arr = [];
       for (let i = 0; i < inputBoxCount?.length; i++) {
-        // console.log(i, inputBoxCount[i]);
         let fraudKeyWords;
         if (
           inputBoxCount[i]?.keywords?.length &&
@@ -260,6 +231,9 @@ const Home = ({ isMdDown, isSmDown }) => {
         } else {
           fraudKeyWords = [...inputBoxCount[i]?.csvKeyWords];
         }
+        if (inputBoxCount[i].url.endsWith("/")) {
+          inputBoxCount[i].url = inputBoxCount[i].url.slice(0, -1);
+        }
         let obj = {
           url: inputBoxCount[i]?.url,
           keywords: fraudKeyWords,
@@ -272,50 +246,48 @@ const Home = ({ isMdDown, isSmDown }) => {
   };
 
   const handleSearchClick = (arr) => {
-    // e.preventDefault();
-    // console.log(searchInput);
-    // setFirstLoading(true);
-    setLoading(true);
-    // setTimeout(() => {
-    //   navigate("/dashboard");
-    // }, 3000);
-    var config = {
-      method: "POST",
-      url: `https://merchant-website-screening.trustcheckr.com/url-screening`,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      data: {
-        user_id: JSON.parse(localStorage.getItem("websiteScreening")).userId,
-        user_data: arr,
-      },
-    };
-    axios(config)
-      .then((response) => {
-        // setFirstLoading(false);
-        console.log(response.data, response.status);
-        // if (response.data.message === "Done") {
-        //   // handleSecondInternalAPICall();
-        // }
-        if (response.status === 200) {
-          for (let item of arr) {
-            console.log(item);
-            handleInternalAPICall(item);
+    if (!JSON.parse(localStorage.getItem("websiteScreening"))?.userId) {
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
+    } else {
+      setLoading({ ...loading, createJob: true });
+      var config = {
+        method: "POST",
+        url: `${process.env.REACT_APP_WEBSITE_SCREENING}/url-screening`,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        data: {
+          user_id: JSON.parse(localStorage.getItem("websiteScreening"))?.userId,
+          user_data: arr,
+        },
+      };
+      axios(config)
+        .then((response) => {
+          if (response.status === 200) {
+            setSnackbarMessage("Task created Successfully");
+            setSnackbarOpen(true);
+            setSnackbarType("success");
+            for (let item of arr) {
+              setTimeout(() => handleInternalAPICall(item), 1500);
+            }
           }
-        }
-      })
-      .catch((error) => {
-        // setFirstLoading(false);
-        console.log(error);
-      });
+        })
+        .catch((error) => {
+          console.log(error);
+          setLoading({ ...loading, createJob: false });
+          setSnackbarMessage("Some Error Occurred");
+          setSnackbarOpen(true);
+          setSnackbarType("error");
+        });
+    }
   };
 
   const handleInternalAPICall = (item) => {
-    // setSecondLoading(true);
-    console.log(item);
     var config = {
       method: "POST",
-      url: `https://merchant-website-screening.trustcheckr.com/get-inline-url`,
+      url: `${process.env.REACT_APP_WEBSITE_SCREENING}/get-inline-url`,
       headers: {
         "Content-Type": "application/json",
       },
@@ -326,20 +298,37 @@ const Home = ({ isMdDown, isSmDown }) => {
     };
     axios(config)
       .then((response) => {
-        // setSecondLoading(false);
-        console.log(response.data);
+        // console.log(response.data);
         if (response.status === 200) {
-          handleGetDataFromUserId();
+          setInputBoxCount([
+            {
+              type: "text",
+              id: 0,
+              url: "",
+              keywords: [],
+              csvKeyWords: null,
+            },
+          ]);
+          setError([
+            {
+              id: 0,
+              url: false,
+              keywords: false,
+              csvKeyWords: false,
+            },
+          ]);
+          setTimeout(() => handleGetDataFromUserId(), 1500);
         }
+        setLoading({ ...loading, createJob: false });
       })
       .catch((error) => {
-        // setSecondLoading(false);
         console.log(error);
+        setLoading({ ...loading, createJob: false });
       });
   };
 
   const handleGetDataFromUserId = () => {
-    setLoading(true);
+    setLoading({ ...loading, userIdData: true });
     let config = {
       method: "POST",
       url: `${process.env.REACT_APP_WEBSITE_SCREENING}/get-data-from-user-id`, //get-data-from-user-id
@@ -352,13 +341,12 @@ const Home = ({ isMdDown, isSmDown }) => {
     };
     axios(config)
       .then((response) => {
-        // console.log(response.data);
         setApiData(response.data?.data?.value);
-        setLoading(false);
+        setLoading({ ...loading, userIdData: false });
       })
       .catch((error) => {
         console.log(error);
-        setLoading(false);
+        setLoading({ ...loading, userIdData: false });
         setApiData(null);
       });
   };
@@ -377,7 +365,7 @@ const Home = ({ isMdDown, isSmDown }) => {
     };
     axios(config)
       .then((response) => {
-        console.log(response.data.data);
+        // console.log(response.data.data);
         setInputBoxCount((s) => {
           const newArr = s.slice();
           newArr[index].csvKeyWords = response.data?.data;
@@ -390,7 +378,9 @@ const Home = ({ isMdDown, isSmDown }) => {
   };
 
   useEffect(() => {
-    handleGetDataFromUserId();
+    if (JSON.parse(localStorage.getItem("websiteScreening"))?.userId) {
+      handleGetDataFromUserId();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -449,6 +439,7 @@ const Home = ({ isMdDown, isSmDown }) => {
                             }}>
                             <InputBase
                               multiline={false}
+                              value={inputBoxCount[index].url}
                               fullWidth={true}
                               id={index}
                               sx={{ ml: 1, flex: 1 }}
@@ -469,7 +460,7 @@ const Home = ({ isMdDown, isSmDown }) => {
                               variant="outlined"
                               disabled={index === 10 ? true : false}
                               color="primary"
-                              sx={{ height: { sm: 44, xs: 44 } }}
+                              sx={{ height: { sm: 44, xs: 34 } }}
                               onClick={(e) =>
                                 handleAddFields(inputBoxCount.length, e)
                               }>
@@ -480,7 +471,7 @@ const Home = ({ isMdDown, isSmDown }) => {
                               disabled={
                                 inputBoxCount.length === 1 ? true : false
                               }
-                              sx={{ height: { sm: 44, xs: 44 } }}
+                              sx={{ height: { sm: 44, xs: 34 } }}
                               size="small"
                               variant="outlined"
                               color="error"
@@ -559,43 +550,37 @@ const Home = ({ isMdDown, isSmDown }) => {
                                 hidden
                                 onChange={(e) => handleCSVUpload(e, index)}
                               />
-                            </Button>
-                            <LightTooltip
-                              placement="bottom-start"
-                              title={
-                                <>
-                                  <Typography variant="caption">
-                                    1.Heading of the CSV file should be
-                                    'keywords'.
+                              <LightTooltip
+                                placement="bottom-start"
+                                title={
+                                  <>
+                                    <Typography variant="caption">
+                                      1.Heading of the CSV file should be
+                                      'keywords'.
+                                      <br />
+                                      2. Keywords has to be lesser than 500
+                                    </Typography>
                                     <br />
-                                    2. Keywords has to be lesser than 500
-                                  </Typography>
-                                  <br />
-                                  <Stack
-                                    direction="column"
-                                    align="center"
-                                    sx={{ mt: 0.5 }}>
-                                    <CSVLink {...csvlink} target="_blank">
-                                      <Button
-                                        sx={{ alignItems: "center" }}
-                                        size="small"
-                                        variant="outlined">
-                                        Download Sample File
-                                      </Button>
-                                    </CSVLink>
-                                  </Stack>
-                                </>
-                              }>
-                              <IconButton
-                                size="small"
-                                // aria-owns={open ? "mouse-over-popover" : undefined}
-                                // aria-haspopup="true"
-                                // onMouseEnter={handlePopoverOpen}
-                                // onMouseLeave={handlePopoverClose}
-                                sx={{ ml: 1 }}>
-                                <InfoOutlinedIcon />
-                              </IconButton>
-                            </LightTooltip>
+                                    <Stack
+                                      direction="column"
+                                      align="center"
+                                      sx={{ mt: 0.5 }}>
+                                      <CSVLink {...csvlink} target="_blank">
+                                        <Button
+                                          sx={{ alignItems: "center" }}
+                                          size="small"
+                                          variant="outlined">
+                                          Download Sample File
+                                        </Button>
+                                      </CSVLink>
+                                    </Stack>
+                                  </>
+                                }>
+                                <IconButton size="small" sx={{ ml: 1 }}>
+                                  <InfoOutlinedIcon />
+                                </IconButton>
+                              </LightTooltip>
+                            </Button>
                           </>
                         ) : (
                           <>
@@ -641,13 +626,7 @@ const Home = ({ isMdDown, isSmDown }) => {
                                   </Stack>
                                 </>
                               }>
-                              <IconButton
-                                size="small"
-                                // aria-owns={open ? "mouse-over-popover" : undefined}
-                                // aria-haspopup="true"
-                                // onMouseEnter={handlePopoverOpen}
-                                // onMouseLeave={handlePopoverClose}
-                                sx={{ ml: 1 }}>
+                              <IconButton size="small" sx={{ ml: 1 }}>
                                 <InfoOutlinedIcon />
                               </IconButton>
                             </LightTooltip>
@@ -671,12 +650,13 @@ const Home = ({ isMdDown, isSmDown }) => {
                 onClick={handleSearch}
                 size="large"
                 sx={{ mt: 1, mb: 2 }}
-                // disabled={loading ? true : false}
+                disabled={loading.createJob ? true : false}
                 endIcon={
-                  // loading ? (
-                  //   <CircularProgress sx={{ color: "#fff" }} size={20} />
-                  // ) : (
-                  <SendIcon />
+                  loading.createJob ? (
+                    <CircularProgress sx={{ color: "#fff" }} size={20} />
+                  ) : (
+                    <SendIcon />
+                  )
                 }
                 variant="contained">
                 Search
@@ -697,11 +677,11 @@ const Home = ({ isMdDown, isSmDown }) => {
 
       {/* past search view */}
 
-      <Container sx={{ my: 2, minHeight: 200, border: "1px solid #DCDCDC" }}>
+      <Container sx={{ my: 2, minHeight: 200 }}>
         <Typography variant="h5" color="primary" align="left" sx={{ my: 3 }}>
           <b>Website Searches</b>
         </Typography>
-        {loading ? (
+        {loading.userIdData ? (
           <>
             <Box
               sx={{
@@ -717,7 +697,7 @@ const Home = ({ isMdDown, isSmDown }) => {
           </>
         ) : (
           <>
-            {!loading && apiData && apiData.length ? (
+            {!loading.userIdData && apiData && apiData.length ? (
               apiData.map((item, index) => (
                 <React.Fragment key={index + item?.base_url}>
                   <Accordion>

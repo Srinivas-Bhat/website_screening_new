@@ -17,6 +17,8 @@ import {
   TableRow,
   Tooltip,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
@@ -29,6 +31,11 @@ import styles from "../../styles/View.module.css";
 import moment from "moment";
 
 const View = () => {
+  function useIsWidthDown(breakpoint) {
+    const theme = useTheme();
+    return useMediaQuery(theme.breakpoints.down(breakpoint));
+  }
+  const isSmDown = useIsWidthDown("sm");
   let { id } = useParams();
   const [formatedData, setFormatedData] = useState(null);
   const [apiData, setApiData] = useState(null);
@@ -36,7 +43,7 @@ const View = () => {
     websiteDetails: false,
     apiCall: false,
   });
-  const [websiteDetails, setWebsiteDetails] = useState(null);
+  let websiteScreening = JSON.parse(localStorage.getItem("websiteScreening"));
 
   const flat_an_object = (object) => {
     let result = {};
@@ -50,7 +57,7 @@ const View = () => {
       }
     };
     recursiveFunction(object);
-    console.log(result);
+    // console.log(result);
     setFormatedData(result);
     // return result;
   };
@@ -63,7 +70,6 @@ const View = () => {
       setFormatedData(data);
       // flat_an_object()
     }
-    // console.log(data)
   };
 
   const handleApiCall = () => {
@@ -76,12 +82,13 @@ const View = () => {
       },
       data: {
         base_url: `https://${id}`,
+        user_id: websiteScreening?.userId,
       },
     };
     axios(config)
       .then((response) => {
-        console.log(response.data);
-        getWebsiteDetails();
+        // console.log(response.data);
+        // getWebsiteDetails();
         setLoading({ ...loading, apiCall: false });
         setApiData(response.data);
       })
@@ -107,53 +114,6 @@ const View = () => {
   useEffect(() => {
     flat_an_object(apiData?.data?.value);
   }, [apiData]);
-
-  const getWebsiteDetails = () => {
-    setLoading({ ...loading, websiteDetails: true });
-    var config = {
-      method: "POST",
-      url: `http://localhost:3003/websiteScreening/getWebsiteDetails`,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      data: {
-        url: `https://${id}`,
-      },
-    };
-    axios(config)
-      .then((response) => {
-        console.log(response.data);
-        setLoading({ ...loading, websiteDetails: false });
-        setWebsiteDetails(response.data);
-      })
-      .catch((error) => {
-        console.log(error);
-        setLoading({ ...loading, websiteDetails: false });
-        setWebsiteDetails(null);
-      });
-  };
-
-  // const logoFinder = () => {
-  //   console.log(id);
-  //   axios
-  //     .get(
-  //       `https://besticon-demo.herokuapp.com/allicons.json?url=https://${id}`
-  //     )
-  //     .then((res) => {
-  //       console.log(res);
-  //       setWebsiteDetails({ ...websiteDetails, api2: res.data });
-  //     })
-  //     .catch((err) => {
-  //       console.log("error from besticon api", err);
-  //       setWebsiteDetails({ ...websiteDetails, api2: null });
-  //     });
-  // };
-
-  // console.log(formatedData);
-  // console.log(id.split(".")[0]);
-  // console.log(typeof formatedData?.emails);
-  // let a = ;
-  // console.log(Object.keys(formatedData));
 
   return (
     <>
@@ -186,31 +146,36 @@ const View = () => {
                     alt="logo"
                     style={{ objectFit: "cover", borderRadius: "50%" }}
                   />
-                  <Typography
-                    variant="body1"
-                    color="textSecondary"
-                    sx={{
-                      mt: 1,
-                      ":first-letter": { textTransform: "uppercase" },
-                    }}>
-                    <b>{id}</b>
-                  </Typography>
+                  {isSmDown ? null : (
+                    <Typography
+                      variant="body1"
+                      color="textSecondary"
+                      sx={{
+                        mt: 1,
+                        ":first-letter": { textTransform: "uppercase" },
+                      }}>
+                      <b>{id}</b>
+                    </Typography>
+                  )}
                 </Box>
               )}
             </Grid>
             <Grid item xs={12} sm={8}>
-              <Stack direction="column">
+              <Stack direction="column" align={isSmDown ? "center" : ""}>
                 <Typography
-                  variant="h3"
+                  variant={isSmDown ? "h4" : "h3"}
                   color="primary"
-                  sx={{ ":first-letter": { textTransform: "uppercase" } }}>
+                  sx={{
+                    ":first-letter": { textTransform: "uppercase" },
+                    my: { xs: 2, sm: 1 },
+                  }}>
                   <b>{id}</b>
                 </Typography>
                 <Typography
                   variant="body2"
                   color="textSecondary"
                   sx={{ my: 1 }}>
-                  {websiteDetails && websiteDetails.title}
+                  {formatedData && formatedData["twitter:title"]}
                 </Typography>
                 {/* <Stack direction="row" sx={{ my: 1 }}>
                     <Typography color="textSecondary">
@@ -1301,8 +1266,11 @@ const View = () => {
               <b>About Website</b>
             </Typography>
             <Typography variant="body2">
-              {websiteDetails && websiteDetails.title}. &nbsp;
-              {websiteDetails && websiteDetails.description}
+              {(formatedData && formatedData["twitter:title"]) ||
+                (formatedData && formatedData["og:title"])}
+              . &nbsp;
+              {(formatedData && formatedData["twitter:description"]) ||
+                (formatedData && formatedData.description)}
             </Typography>
             <Divider sx={{ my: 1 }} />
             <Typography color="primary" variant="h6" sx={{ my: 1 }}>
@@ -1333,10 +1301,23 @@ const View = () => {
               <Typography variant="body2">{formatedData?.address}</Typography>
             </Stack>
             <Divider sx={{ my: 1 }} />
+            {/* <Box sx={{ my: 1, minHeight: 100 }}>
+              <Typography color="primary" variant="h6">
+                <b>Reviews</b>
+              </Typography>
+            </Box> */}
             <Box sx={{ my: 1, minHeight: 100 }}>
               <Typography color="primary" variant="h6">
                 <b>Reviews</b>
               </Typography>
+              <Paper
+                variant="outlined"
+                sx={{ p: 1, minHeight: 200 }}
+                className={styles.centered}>
+                <Typography variant="body2" color="error" align="center">
+                  Not Found
+                </Typography>
+              </Paper>
             </Box>
           </Box>
         </Grid>
@@ -1347,25 +1328,3 @@ const View = () => {
 };
 
 export default View;
-{
-  /* <Grid container sx={{ border: "1px solid black", mt: 4 }}>
-            <Grid item xs={12} sm={4} className={styles.centered}>
-              {loading.websiteDetails ? (
-                <Skeleton variant="circular" width={150} height={150} />
-              ) : (
-                <Box sx={{ width: 150, height: 150, borderRadius: "50%" }}>
-                  <img
-                    src={websiteDetails && websiteDetails.image}
-                    width={"100%"}
-                    height={"100%"}
-                    alt="logo"
-                    style={{ objectFit: "cover", borderRadius: "50%" }}
-                  />
-                </Box>
-              )}
-            </Grid>
-            <Grid item xs={12} sm={8}>
-              <Typography>hello bros</Typography>
-            </Grid>
-          </Grid> */
-}

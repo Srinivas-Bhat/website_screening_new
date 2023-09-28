@@ -7,7 +7,10 @@ import PageLogin from "./Pages/PageLogin/PageLogin";
 import PageView from "./Pages/PageView/PageView";
 import PageHome from "./Pages/PageHome/PageHome";
 import PageConfirmEmail from "./Pages/PageConfirmEmail/PageConfirmEmail";
-import PageMailConfirm from "./Pages/PageMailConfirm/PageMailConfirm";
+import TermsOfUse from "./Components/Common/Footer/TermsOfUse";
+import PrivacyPolicy from "./Components/Common/Footer/PrivacyPolicy";
+import CookiePolicy from "./Components/Common/Footer/CookiePolicy";
+import DataDeletion from "./Components/Common/Footer/DataDeletion";
 
 const theme = createTheme({
   typography: {
@@ -40,11 +43,14 @@ function App() {
         <Route path="/results/:id" element={<PageView />} />
         <Route path="/login" element={<PageLogin />} />
         <Route path="/signup" element={<PageSignup />} />
-        <Route path="/confirm-email" element={<PageMailConfirm />} />
         <Route path="/" element={<PageConfirmEmail />}>
           <Route path=":email/:otp" element={<PageConfirmEmail />} />
         </Route>
         <Route path="/*" element={<PageNotFound />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-use" element={<TermsOfUse />} />
+        <Route path="/opt-out" element={<DataDeletion />} />
+        <Route path="/cookie-policy" element={<CookiePolicy />} />
       </Routes>
     </ThemeProvider>
   );

@@ -5,30 +5,23 @@ import {
   Button,
   Card,
   Divider,
-  Link,
-  Paper,
   Snackbar,
   Stack,
   TextField,
   Typography,
-  useMediaQuery,
-  useTheme,
 } from "@mui/material";
 import { useNavigate } from "react-router";
 import { useParams } from "react-router-dom";
 import styles from "../../styles/confirmMail.module.css";
 import axios from "axios";
+import TickAnimation from "../Common/TickAnimation";
 
 function ConfirmEmail() {
-  function useIsWidthDown(breakpoint) {
-    const theme = useTheme();
-    return useMediaQuery(theme.breakpoints.down(breakpoint));
-  }
-  const isSmDown = useIsWidthDown("sm");
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnacbarMessage] = useState("");
   const [snackbarType, setSnackbarType] = useState("error");
   const [userEmail, setUserEmail] = useState("");
+  const [success, setSuccess] = useState(false);
   const [error, setError] = useState({
     email: false,
     otp: false,
@@ -41,6 +34,10 @@ function ConfirmEmail() {
     setUserEmail(email);
     setUserOtp(otp);
   }, [email, otp]);
+
+  useEffect(() => {
+    setSuccess(false);
+  }, []);
 
   const handleConfirmEmail = () => {
     if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
@@ -59,6 +56,7 @@ function ConfirmEmail() {
         axios(config)
           .then((response) => {
             console.log(response.data);
+            setSuccess(true);
             setSnackbarOpen(true);
             setSnacbarMessage(response.data?.data);
             setSnackbarType("success");
@@ -70,8 +68,11 @@ function ConfirmEmail() {
           })
           .catch((error) => {
             console.log(error);
+            setSuccess(false);
             setSnackbarOpen(true);
-            setSnacbarMessage("Some error occurred");
+            setSnacbarMessage(
+              error?.response?.data?.error || "Some error occurred"
+            );
             setSnackbarType("error");
           });
       } else {
@@ -96,11 +97,10 @@ function ConfirmEmail() {
     axios(config)
       .then((response) => {
         console.log(response.data);
-        setTimeout(() => {
-          navigate("/confirm-email");
-        }, 2000);
+        setSuccess(true);
       })
       .catch((error) => {
+        setSuccess(false);
         console.log(error);
       });
   };
@@ -119,73 +119,85 @@ function ConfirmEmail() {
 
   return (
     <>
-      <Box sx={{ height: "100vh" }} className={styles.centered}>
-        <Card variant="outlined" sx={{ width: "100%", p: 3 }}>
-          <Box>
-            <Typography variant="h5" align="center" sx={{ mb: 0.5 }}>
-              <b>Confirm Email</b>
+      {success ? (
+        <Box sx={{ height: "100vh" }} className={styles.centered}>
+          <Card variant="outlined" sx={{ width: "100%", p: 3 }}>
+            <TickAnimation />
+            <Typography align="center" sx={{ my: 4 }} variant="h5">
+              <b>Your Mail Sent Successfully</b>
             </Typography>
-            {/* <Typography
-              variant="body2"
+            <Typography
               align="center"
+              sx={{ my: 1 }}
               color="textSecondary"
-              sx={{ mb: 3 }}
-            >
-              Please Confirm your email
-            </Typography> */}
-            <Divider sx={{ fontSize: "14px", my: 2 }} />
-          </Box>
-          <Stack direction="column" spacing={0}>
+              variant="body1">
+              Email Successfully verified. Please login with your entered email
+              id and password.
+            </Typography>
+          </Card>
+        </Box>
+      ) : (
+        <Box sx={{ height: "100vh" }} className={styles.centered}>
+          <Card variant="outlined" sx={{ width: "100%", p: 3 }}>
             <Box>
-              <Typography variant="body1">
-                <b>Email</b>
+              <Typography variant="h5" align="center" sx={{ mb: 0.5 }}>
+                <b>Confirm Email</b>
               </Typography>
-              <TextField
-                color={error.email ? "error" : "primary"}
-                margin="normal"
-                type="email"
-                size="small"
-                required
-                fullWidth
-                id="email"
-                placeholder="Email Address"
-                name="email"
-                autoComplete="email"
-                value={userEmail}
-                onChange={(e) => handleInputs(e, "email")}
-                helperText={error.email ? "Enter a valid email" : " "}
-              />
+              <Divider sx={{ fontSize: "14px", my: 2 }} />
             </Box>
-            <Box>
-              <Typography variant="body1">
-                <b>OTP</b>
-              </Typography>
-              <TextField
-                margin="normal"
-                type="text"
-                size="small"
-                required
-                fullWidth
-                id="otp"
-                placeholder="OTP"
-                name="otp"
-                autoComplete="otp"
-                value={userOtp}
-                onChange={(e) => handleInputs(e, "otp")}
-              />
-            </Box>
-            <Button onClick={handleConfirmEmail} variant="contained">
-              Confirm Email
-            </Button>
-          </Stack>
-          <Typography variant="body2" align="center" sx={{ mt: 1 }}>
-            Don't have an account ?
-            <Button variant="text" onClick={handleResendEmail}>
-              Resend Email
-            </Button>
-          </Typography>
-        </Card>
-      </Box>
+            <Stack direction="column" spacing={0}>
+              <Box>
+                <Typography variant="body1">
+                  <b>Email</b>
+                </Typography>
+                <TextField
+                  color={error.email ? "error" : "primary"}
+                  margin="normal"
+                  type="email"
+                  size="small"
+                  required
+                  fullWidth
+                  id="email"
+                  placeholder="Email Address"
+                  name="email"
+                  autoComplete="email"
+                  value={userEmail}
+                  onChange={(e) => handleInputs(e, "email")}
+                  helperText={error.email ? "Enter a valid email" : " "}
+                />
+              </Box>
+              <Box>
+                <Typography variant="body1">
+                  <b>OTP</b>
+                </Typography>
+                <TextField
+                  margin="normal"
+                  type="text"
+                  size="small"
+                  required
+                  fullWidth
+                  id="otp"
+                  placeholder="OTP"
+                  name="otp"
+                  autoComplete="otp"
+                  value={userOtp}
+                  onChange={(e) => handleInputs(e, "otp")}
+                />
+              </Box>
+              <Button onClick={handleConfirmEmail} variant="contained">
+                Confirm Email
+              </Button>
+            </Stack>
+            <Typography variant="body2" align="center" sx={{ mt: 1 }}>
+              Don't have an account ?
+              <Button variant="text" onClick={handleResendEmail}>
+                Resend Email
+              </Button>
+            </Typography>
+          </Card>
+        </Box>
+      )}
+
       {/* Snackbar for showing the alerts */}
       <Snackbar
         open={snackbarOpen}

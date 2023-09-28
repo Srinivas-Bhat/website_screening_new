@@ -5,52 +5,19 @@ import {
   Divider,
   Grid,
   Paper,
-  Skeleton,
   Stack,
   Typography,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import AlternateEmailIcon from "@mui/icons-material/AlternateEmail";
 import ContactMailIcon from "@mui/icons-material/ContactMail";
 import styles from "../../styles/View.module.css";
 import moment from "moment";
 
 const Result = ({ data, isMdDown, isSmDown }) => {
+  // console.log(data);
   const navigate = useNavigate();
-  const [websiteDetails, setWebsiteDetails] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  const getWebsiteDetails = (domain) => {
-    setLoading(true);
-    var config = {
-      method: "POST",
-      url: `http://localhost:3003/websiteScreening/getWebsiteDetails`,
-      headers: {
-        "Content-Type": "application/json",
-      },
-      data: {
-        // url: `https://${id}`,
-        url: domain,
-      },
-    };
-    axios(config)
-      .then((response) => {
-        // console.log(response.data);
-        setLoading(false);
-        setWebsiteDetails(response.data);
-      })
-      .catch((error) => {
-        console.log(error);
-        setLoading(false);
-        setWebsiteDetails(null);
-      });
-  };
-
-  useEffect(() => {
-    getWebsiteDetails(`https://${data.base_url}`);
-  }, []);
 
   return (
     <>
@@ -64,48 +31,50 @@ const Result = ({ data, isMdDown, isSmDown }) => {
               top: "25%",
             }}>
             <Grid item xs={12} sm={3} className={styles.centered}>
-              {loading ? (
-                <Skeleton variant="circular" width={120} height={120} />
-              ) : (
-                <Box
-                  sx={{
-                    width: 120,
-                    height: 120,
-                    borderRadius: "50%",
-                    flexDirection: "column",
+              <Box
+                sx={{
+                  width: 120,
+                  height: 120,
+                  borderRadius: "50%",
+                  flexDirection: "column",
+                }}
+                className={styles.centered}>
+                <img
+                  className={styles.centered}
+                  // src={`https://www.google.com/s2/favicons?sz=64&domain_url=${id}`}
+                  src={`https://logo.clearbit.com/${data.base_url}`}
+                  width={"100%"}
+                  height={"100%"}
+                  alt="logo"
+                  style={{
+                    objectFit: "contain",
+                    borderRadius: "10%",
                   }}
-                  className={styles.centered}>
-                  <img
-                    className={styles.centered}
-                    // src={`https://www.google.com/s2/favicons?sz=64&domain_url=${id}`}
-                    src={`https://logo.clearbit.com/${data.base_url}`}
-                    width={"100%"}
-                    height={"100%"}
-                    alt="logo"
-                    style={{ objectFit: "contain", borderRadius: "50%" }}
-                  />
-                  <Typography
-                    variant="body1"
-                    color="textSecondary"
-                    sx={{
-                      mt: 1,
-                      ":first-letter": { textTransform: "uppercase" },
-                    }}>
-                    <b>{data?.base_url}</b>
-                  </Typography>
-                </Box>
-              )}
+                />
+                <Typography
+                  variant="body1"
+                  color="textSecondary"
+                  sx={{
+                    mt: 1,
+                    ":first-letter": { textTransform: "uppercase" },
+                  }}>
+                  <b>{data?.base_url}</b>
+                </Typography>
+              </Box>
             </Grid>
             <Grid item xs={12} sm={6} md={7} className={styles.centered}>
               <Stack direction="column">
                 <Typography
                   variant={isSmDown ? "h5" : isMdDown ? "h5" : "h4"}
                   color="primary"
-                  sx={{ ":first-letter": { textTransform: "uppercase" } }}>
+                  // sx={{ ":first-letter": { textTransform: "uppercase" } }}
+                >
                   <b>
-                    {typeof data?.whois_information?.domain_name === "object"
-                      ? data?.whois_information?.domain_name[0]
-                      : data?.whois_information?.domain_name}
+                    {data?.whois_information?.domain_name
+                      ? typeof data?.whois_information?.domain_name === "object"
+                        ? data?.whois_information?.domain_name[0]
+                        : data?.whois_information?.domain_name
+                      : data?.base_url}
                   </b>
                 </Typography>
                 <Typography
@@ -113,7 +82,7 @@ const Result = ({ data, isMdDown, isSmDown }) => {
                   color="textSecondary"
                   align="center"
                   sx={{ my: 1 }}>
-                  {websiteDetails?.title}
+                  {data?.meta_data?.twitter?.title}
                 </Typography>
               </Stack>
             </Grid>
@@ -391,7 +360,6 @@ const Result = ({ data, isMdDown, isSmDown }) => {
           xs={12}
           sm={3.5}
           sx={{
-            // border: "1px solid black",
             height: "100%",
           }}>
           <Box sx={{ p: 1 }}>
@@ -399,8 +367,11 @@ const Result = ({ data, isMdDown, isSmDown }) => {
               <b>About Website</b>
             </Typography>
             <Typography variant="body2">
-              {websiteDetails && websiteDetails.title}. &nbsp;
-              {websiteDetails && websiteDetails.description}
+              {data?.meta_data?.twitter && data?.meta_data?.twitter?.title}.
+              &nbsp;
+              {(data?.meta_data?.twitter &&
+                data?.meta_data?.twitter?.description) ||
+                data?.meta?.meta_data?.description}
             </Typography>
             <Divider sx={{ my: 1 }} />
             <Typography color="primary" variant="h6" sx={{ my: 1 }}>

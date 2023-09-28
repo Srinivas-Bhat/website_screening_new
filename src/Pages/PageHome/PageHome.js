@@ -1,9 +1,8 @@
-import { Box, Container, useMediaQuery, useTheme } from "@mui/material";
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Box, useMediaQuery, useTheme } from "@mui/material";
+import React from "react";
 import Home from "../../Components/Home/Home";
 import Navbar from "../../Components/Common/Navbar";
-import axios from "axios";
+import Footer from "../../Components/Common/Footer/Footer";
 
 const PageHome = () => {
   function useIsWidthDown(breakpoint) {
@@ -18,6 +17,7 @@ const PageHome = () => {
       <Box>
         <Home isMdDown={isMdDown} isSmDown={isSmDown} />
       </Box>
+      <Footer />
     </>
   );
 };

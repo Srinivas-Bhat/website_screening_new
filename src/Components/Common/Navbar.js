@@ -1,26 +1,21 @@
 import React from "react";
 import {
   AppBar,
-  Avatar,
   Box,
   Button,
   Container,
-  Divider,
   IconButton,
   Link,
   Toolbar,
   Tooltip,
-  Typography,
 } from "@mui/material";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import LogoutIcon from "@mui/icons-material/Logout";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PersonIcon from "@mui/icons-material/Person";
 import useScrollTrigger from "@mui/material/useScrollTrigger";
 import tcIcon from "../../Assets/trustcheckr_logo_new.svg";
 
 const Navbar = (props) => {
-  const location = useLocation();
   const navigate = useNavigate();
   const trigger = useScrollTrigger({
     target: props.window ? props.window() : undefined,
@@ -57,13 +52,7 @@ const Navbar = (props) => {
             {websiteScreening?.userId ? (
               <>
                 <Tooltip title="Logout">
-                  <IconButton
-                    color="primary"
-                    onClick={handleLogout}
-                    // aria-controls={open ? "account-menu" : undefined}
-                    // aria-haspopup="true"
-                    // aria-expanded={open ? "true" : undefined}
-                  >
+                  <IconButton color="primary" onClick={handleLogout}>
                     {/* <Avatar
                       alt={"User"}
                       src="./"
